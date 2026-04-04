@@ -1,4 +1,4 @@
-// KissKh kkey generator — ported directly from kisskh.ovh/common.js
+// KissKh kkey generator — ported directly from kisskh.co/common.js
 // Original: window._0x54b991 (obfuscated AES-based block cipher)
 
 function strToWordArray(str: string): [number[], number] {
@@ -102,7 +102,7 @@ export function generateKkey(
   ts: string = 'null',
   time: string = 'null',
   version: string = '2.8.10',
-  url: string = 'https://kisskh.ovh/',
+  url: string = 'https://kisskh.co/',
   referrer: string = '',
   platform: string = 'Win32',
   appCodeName: string = 'Mozilla',

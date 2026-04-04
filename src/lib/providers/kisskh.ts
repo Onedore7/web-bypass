@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { generateKkey } from '../kisskh-kkey';
 
-const BASE = 'https://kisskh.ovh';
+const BASE = 'https://kisskh.co';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
