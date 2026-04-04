@@ -273,43 +273,58 @@ async function fetchTmdbId(title: string, isMovie: boolean): Promise<number | nu
 export async function getStreams(streamData: string) {
   const streams: { url: string; label: string; type: string }[] = [];
 
-  // Handle TMDB-sourced items: search Watch32 site for the content first
+  // Handle TMDB-sourced items
   let endpoint = streamData; // e.g. "list/149641" or "servers/12345"
   try {
     const parsed = JSON.parse(streamData);
     if (parsed.tmdbId) {
-      // Try to find Watch32 page for this TMDB item
       const contentId = await findWatch32ContentId(parsed.title, parsed.type);
       if (contentId) {
         endpoint = parsed.type === 'movie' ? `list/${contentId}` : `servers/${contentId}`;
       } else {
-        // Fallback to public embeds using TMDB id
         return getFallbackEmbeds(parsed.tmdbId, parsed.type);
       }
     }
   } catch { /* not JSON, use as-is */ }
 
-  // Try multiple compatible servers
   for (const server of SERVERS) {
     try {
       const ajaxUrl = `${server}/ajax/episode/${endpoint}`;
-      const { data: serversHtml } = await axios.get(ajaxUrl, { headers: { ...HEADERS, Referer: server + '/' }, timeout: 8000 });
+      const { data: serversHtml } = await axios.get(ajaxUrl, {
+        headers: {
+          'User-Agent': HEADERS['User-Agent'],
+          'Referer': server + '/',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'text/html, */*; q=0.01',
+        },
+        timeout: 10000,
+      });
+
       const $ = cheerio.load(serversHtml);
-      const serverLinks = $('a.link-item, li.nav-item a, ul.nav li a').toArray();
+      // Confirmed from live test: servers use class="link-item" with data-id (NOT data-linkid)
+      const serverLinks = $('a.link-item').toArray();
       if (serverLinks.length === 0) continue;
 
-      // Resolve each server link
       const results = await Promise.allSettled(
         serverLinks.map(async (el: El, i: number) => {
-          const linkId = $(el).attr('data-linkid') || $(el).attr('data-id') || '';
-          const label  = $(el).text().trim() || `Server ${i + 1}`;
+          // Watch32 uses data-id for the link ID (confirmed by live test)
+          const linkId = $(el).attr('data-id') || $(el).attr('data-linkid') || '';
+          const label  = $(el).find('span').text().trim() || $(el).text().trim() || `Server ${i + 1}`;
           if (!linkId) return null;
           const { data: srcData } = await axios.get(
             `${server}/ajax/episode/sources/${linkId}`,
-            { headers: { ...HEADERS, Referer: server + '/' }, timeout: 6000 }
+            {
+              headers: {
+                'User-Agent': HEADERS['User-Agent'],
+                'Referer': server + '/',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+              timeout: 8000,
+            }
           );
           if (srcData?.link) {
-            return { url: srcData.link, label, type: srcData.link.includes('.m3u8') ? 'm3u8' : 'embed' };
+            const isM3u8 = srcData.link.includes('.m3u8');
+            return { url: srcData.link, label, type: isM3u8 ? 'm3u8' : 'embed' };
           }
           return null;
         })
@@ -319,12 +334,15 @@ export async function getStreams(streamData: string) {
         if (r.status === 'fulfilled' && r.value) streams.push(r.value);
       }
 
-      if (streams.length > 0) break; // Got results, stop trying servers
+      if (streams.length > 0) break;
     } catch { continue; }
   }
 
   return streams;
 }
+
+
+
 
 async function findWatch32ContentId(title: string, type: string): Promise<string | null> {
   try {
