@@ -5,7 +5,7 @@ interface Props { active: Provider; onChange: (p: Provider) => void; }
 const PROVIDERS: { id: Provider; label: string; emoji: string; desc: string }[] = [
   { id: 'streamplay', label: 'StreamPlay', emoji: '🌐', desc: 'Global Movies & TV' },
   { id: 'kisskh', label: 'KissKh', emoji: '🎭', desc: 'K-Drama & Anime' },
-  { id: 'pencurimovie', label: 'PencuriMovie', emoji: '🎬', desc: 'Asian Cinema' },
+  { id: 'watch32', label: 'Watch32', emoji: '📺', desc: 'Movies & TV Shows' },
 ];
 
 export default function ProviderTabs({ active, onChange }: Props) {

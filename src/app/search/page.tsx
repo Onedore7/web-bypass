@@ -24,7 +24,7 @@ function SearchResults() {
   }, [q, provider]);
 
   const PROVIDER_LABEL: Record<Provider, string> = {
-    streamplay: '🌐 StreamPlay', kisskh: '🎭 KissKh', pencurimovie: '🎬 PencuriMovie',
+    streamplay: '🌐 StreamPlay', kisskh: '🎭 KissKh', watch32: '📺 Watch32',
   };
 
   return (

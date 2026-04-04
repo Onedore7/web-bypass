@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as pencurimovie from '@/lib/providers/pencurimovie';
+import * as watch32 from '@/lib/providers/watch32';
 import * as kisskh from '@/lib/providers/kisskh';
 import * as streamplay from '@/lib/providers/streamplay';
 
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   if (!data) return NextResponse.json({ ok: false, error: 'Missing data' }, { status: 400 });
   try {
     let streams;
-    if (provider === 'pencurimovie') streams = await pencurimovie.getStreams(data);
+    if (provider === 'watch32') streams = await watch32.getStreams(data);
     else if (provider === 'kisskh') {
       const [video, subs] = await Promise.all([kisskh.getStreams(data), kisskh.getSubtitles(data)]);
       return NextResponse.json({ ok: true, streams: video, subtitles: subs });

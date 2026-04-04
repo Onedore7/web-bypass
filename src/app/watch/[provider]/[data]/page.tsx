@@ -46,7 +46,7 @@ export default function WatchPage() {
       <div className="flex items-center gap-4 px-4 py-3" style={{ background: 'rgba(0,0,0,0.8)', borderBottom: '1px solid var(--border)' }}>
         <Link href="/" style={{ color: 'var(--accent)', fontSize: '0.875rem' }}>← Home</Link>
         <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {decodedProvider === 'kisskh' ? '🎭 KissKh' : decodedProvider === 'pencurimovie' ? '🎬 PencuriMovie' : '🌐 StreamPlay'}
+          {decodedProvider === 'kisskh' ? '🎭 KissKh' : decodedProvider === 'watch32' ? '📺 Watch32' : '🌐 StreamPlay'}
         </span>
       </div>
 

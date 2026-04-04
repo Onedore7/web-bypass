@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as pencurimovie from '@/lib/providers/pencurimovie';
+import * as watch32 from '@/lib/providers/watch32';
 import * as kisskh from '@/lib/providers/kisskh';
 import * as streamplay from '@/lib/providers/streamplay';
 
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1');
   try {
     let data;
-    if (provider === 'pencurimovie') data = await pencurimovie.getHome(page);
+    if (provider === 'watch32') data = await watch32.getHome(page);
     else if (provider === 'kisskh') data = await kisskh.getHome(page);
     else data = await streamplay.getHome(page);
     return NextResponse.json({ ok: true, data });

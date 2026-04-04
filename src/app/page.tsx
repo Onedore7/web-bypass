@@ -7,7 +7,7 @@ import ProviderTabs from '@/components/ProviderTabs';
 import ContentRow from '@/components/ContentRow';
 import Navbar from '@/components/Navbar';
 
-export type Provider = 'streamplay' | 'kisskh' | 'pencurimovie';
+export type Provider = 'streamplay' | 'kisskh' | 'watch32';
 
 export interface MediaCard {
   id: string;
@@ -71,7 +71,7 @@ export default function HomePage() {
             <div className="max-w-xl">
               <div className="flex items-center gap-2 mb-3">
                 <span className="provider-badge" style={{ background: 'rgba(108,99,255,0.2)', color: '#6c63ff', border: '1px solid rgba(108,99,255,0.3)' }}>
-                  {provider === 'streamplay' ? '🌐 StreamPlay' : provider === 'kisskh' ? '🎭 KissKh' : '🎬 PencuriMovie'}
+                  {provider === 'streamplay' ? '🌐 StreamPlay' : provider === 'kisskh' ? '🎭 KissKh' : '📺 Watch32'}
                 </span>
                 {hero.year && <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{hero.year}</span>}
                 {hero.rating && <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>★ {hero.rating}</span>}

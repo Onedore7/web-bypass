@@ -49,7 +49,7 @@ export default function Navbar({ activeProvider, onProviderChange }: NavbarProps
         {([
           { id: 'streamplay', label: '🌐', full: 'StreamPlay' },
           { id: 'kisskh', label: '🎭', full: 'KissKh' },
-          { id: 'pencurimovie', label: '🎬', full: 'PencuriMovie' },
+          { id: 'watch32', label: '📺', full: 'Watch32' },
         ] as { id: Provider; label: string; full: string }[]).map(p => (
           <button key={p.id} onClick={() => onProviderChange(p.id)}
             title={p.full}
