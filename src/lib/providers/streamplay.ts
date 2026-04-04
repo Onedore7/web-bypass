@@ -4,7 +4,7 @@ const TMDB = 'https://api.themoviedb.org/3';
 const IMG = 'https://image.tmdb.org/t/p/w500';
 const IMGBIG = 'https://image.tmdb.org/t/p/original';
 // Public TMDB key (same one hardcoded in KissKh Utils.kt)
-const API_KEY = process.env.TMDB_API || '1865f43a0549ca50d341dd9ab8b29f49';
+const API_KEY = process.env.TMDB_API || '05b5d26f15aa1f76b35187c5cc129256';
 
 const PUBLIC_SOURCES = [
   { id: 'vidsrc', label: 'VidSrc', movie: (id: number) => `https://vidsrc.cc/v2/embed/movie/${id}`, tv: (id: number, s: number, e: number) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}` },
