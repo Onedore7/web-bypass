@@ -10,6 +10,7 @@ interface Detail {
   title: string; poster: string; backdrop?: string; overview?: string; description?: string;
   year?: string; rating?: string; genres?: string[]; cast?: { name: string; photo?: string; role?: string }[];
   type?: string; episodes?: Episode[]; status?: string; country?: string; trailer?: string;
+  streamData?: string; // Watch32: "list/{contentId}" for movies, "servers/{epId}" for episodes
 }
 
 export default function DetailPage() {
@@ -52,7 +53,9 @@ export default function DetailPage() {
   );
 
   const isMovie = detail.type === 'movie' || !detail.episodes?.length;
-  const directWatchHref = `/watch/${encodeURIComponent(decodedProvider)}/${encodeURIComponent(decodedId)}`;
+  // For Watch32: use streamData (list/{contentId}), else fall back to decodedId
+  const watchData = detail.streamData || decodedId;
+  const directWatchHref = `/watch/${encodeURIComponent(decodedProvider)}/${encodeURIComponent(watchData)}`;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
