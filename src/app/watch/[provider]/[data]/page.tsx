@@ -81,7 +81,7 @@ export default function WatchPage() {
                   className="absolute inset-0 w-full h-full"
                   allowFullScreen
                   allow="autoplay; encrypted-media; picture-in-picture"
-                  referrerPolicy="no-referrer"
+                  referrerPolicy={decodedProvider === 'watch32' ? 'strict-origin-when-cross-origin' : 'no-referrer'}
                   style={{ border: 'none' }}
                 />
               ) : isM3U8 ? (

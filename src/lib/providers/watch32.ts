@@ -270,19 +270,63 @@ async function fetchTmdbId(title: string, isMovie: boolean): Promise<number | nu
   } catch { return null; }
 }
 
+/** Per-episode data-id for ajax/episode/servers/{id} — not the series content id. */
+async function findWatch32EpisodeDataId(
+  seriesContentId: string,
+  season: number,
+  episode: number
+): Promise<string | null> {
+  try {
+    const { data: seasonsHtml } = await axios.get(`${BASE}/ajax/season/list/${seriesContentId}`, { headers: HEADERS, timeout: 8000 });
+    const $s = cheerio.load(seasonsHtml);
+    for (const seasonEl of $s('a.ss-item').toArray()) {
+      const seasonId = $s(seasonEl).attr('data-id') || '';
+      const seasonNum = parseInt($s(seasonEl).text().replace(/Season/gi, '').trim(), 10) || 1;
+      if (!seasonId || seasonNum !== season) continue;
+      const { data: epsHtml } = await axios.get(`${BASE}/ajax/season/episodes/${seasonId}`, { headers: HEADERS, timeout: 8000 });
+      const $e = cheerio.load(epsHtml);
+      let found: string | null = null;
+      $e('a.eps-item, div.eps-item').each((_: number, epEl: El) => {
+        if (found) return;
+        const epId = $e(epEl).attr('data-id') || '';
+        const titleAt = $e(epEl).attr('title') || $e(epEl).find('img').attr('title') || '';
+        const match = titleAt.match(/(?:Eps|Episode)\s*(\d+):\s*(.+)/);
+        if (!match || !epId) return;
+        const epNum = parseInt(match[1], 10);
+        if (epNum === episode) found = epId;
+      });
+      return found;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getStreams(streamData: string) {
   const streams: { url: string; label: string; type: string }[] = [];
 
   // Handle TMDB-sourced items
   let endpoint = streamData; // e.g. "list/149641" or "servers/12345"
+  let tmdbFallback: { tmdbId: number; type: string; season: number; episode: number } | null = null;
   try {
     const parsed = JSON.parse(streamData);
     if (parsed.tmdbId) {
+      const season = typeof parsed.season === 'number' ? parsed.season : 1;
+      const episode = typeof parsed.episode === 'number' ? parsed.episode : 1;
+      tmdbFallback = { tmdbId: parsed.tmdbId, type: parsed.type, season, episode };
       const contentId = await findWatch32ContentId(parsed.title, parsed.type);
-      if (contentId) {
-        endpoint = parsed.type === 'movie' ? `list/${contentId}` : `servers/${contentId}`;
+      if (!contentId) {
+        return getFallbackEmbeds(parsed.tmdbId, parsed.type, season, episode);
+      }
+      if (parsed.type === 'movie') {
+        endpoint = `list/${contentId}`;
       } else {
-        return getFallbackEmbeds(parsed.tmdbId, parsed.type);
+        const epDataId = await findWatch32EpisodeDataId(contentId, season, episode);
+        if (!epDataId) {
+          return getFallbackEmbeds(parsed.tmdbId, parsed.type, season, episode);
+        }
+        endpoint = `servers/${epDataId}`;
       }
     }
   } catch { /* not JSON, use as-is */ }
@@ -338,6 +382,15 @@ export async function getStreams(streamData: string) {
     } catch { continue; }
   }
 
+  if (streams.length === 0 && tmdbFallback) {
+    return getFallbackEmbeds(
+      tmdbFallback.tmdbId,
+      tmdbFallback.type,
+      tmdbFallback.season,
+      tmdbFallback.episode
+    );
+  }
+
   return streams;
 }
 
@@ -359,12 +412,14 @@ async function findWatch32ContentId(title: string, type: string): Promise<string
   } catch { return null; }
 }
 
-function getFallbackEmbeds(tmdbId: number, type: string) {
+function getFallbackEmbeds(tmdbId: number, type: string, season = 1, episode = 1) {
   const isMovie = type === 'movie';
+  const s = season;
+  const e = episode;
   return [
-    { url: isMovie ? `https://vidsrc.cc/v2/embed/movie/${tmdbId}` : `https://vidsrc.cc/v2/embed/tv/${tmdbId}/1/1`, label: 'VidSrc', type: 'embed' },
-    { url: isMovie ? `https://www.2embed.cc/embed/${tmdbId}` : `https://www.2embed.cc/embedtv/${tmdbId}&s=1&e=1`, label: '2Embed', type: 'embed' },
-    { url: isMovie ? `https://vidlink.pro/movie/${tmdbId}` : `https://vidlink.pro/tv/${tmdbId}/1/1`, label: 'VidLink', type: 'embed' },
-    { url: isMovie ? `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1` : `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=1&e=1`, label: 'MultiEmbed', type: 'embed' },
+    { url: isMovie ? `https://vidsrc.cc/v2/embed/movie/${tmdbId}` : `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${s}/${e}`, label: 'VidSrc', type: 'embed' },
+    { url: isMovie ? `https://www.2embed.cc/embed/${tmdbId}` : `https://www.2embed.cc/embedtv/${tmdbId}&s=${s}&e=${e}`, label: '2Embed', type: 'embed' },
+    { url: isMovie ? `https://vidlink.pro/movie/${tmdbId}` : `https://vidlink.pro/tv/${tmdbId}/${s}/${e}`, label: 'VidLink', type: 'embed' },
+    { url: isMovie ? `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1` : `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${s}&e=${e}`, label: 'MultiEmbed', type: 'embed' },
   ];
 }
