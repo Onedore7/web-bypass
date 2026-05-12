@@ -47,19 +47,6 @@ export default function HomePage() {
 
       {/* Hero Banner */}
       <div className="relative h-[420px] md:h-[520px] overflow-hidden" style={{ background: '#0a0a0f' }}>
-        {/* Backdrop image (if hero loaded) */}
-        {hero && (hero.backdrop || hero.poster) && (
-          <>
-            <Image
-              src={hero.backdrop || hero.poster}
-              alt={hero.title || 'hero'}
-              fill className="object-cover"
-              priority onError={() => {}}
-            />
-            <div className="absolute inset-0" style={{ background: 'rgba(10,10,15,0.8)' }} />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0a0a0f 0%, transparent 40%)' }} />
-          </>
-        )}
 
         {/* MR. PPK Logo — centered in upper area */}
         <div style={{
