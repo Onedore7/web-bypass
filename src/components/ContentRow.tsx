@@ -1,4 +1,5 @@
 'use client';
+import { useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { MediaCard } from '@/app/page';
@@ -6,33 +7,55 @@ import type { MediaCard } from '@/app/page';
 interface Props { items: MediaCard[]; name: string; }
 
 export default function ContentRow({ items, name }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const amount = direction === 'left' ? -400 : 400;
+    scrollRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+  };
+
   return (
-    <div>
+    <div className="relative group/row">
       <h2 className="text-base font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
         <span className="w-1 h-4 rounded-full" style={{ background: 'var(--accent)', display: 'inline-block' }} />
         {name}
       </h2>
-      <div className="scroll-row">
+
+      {/* Scroll arrows */}
+      <button
+        onClick={() => scroll('left')}
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity duration-200"
+        style={{ background: 'rgba(108,99,255,0.9)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)', marginTop: '12px' }}
+      >
+        <svg width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+      </button>
+      <button
+        onClick={() => scroll('right')}
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity duration-200"
+        style={{ background: 'rgba(108,99,255,0.9)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)', marginTop: '12px' }}
+      >
+        <svg width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+      </button>
+
+      <div ref={scrollRef} className="scroll-row">
         {items.map((item, i) => (
           <MediaCardItem key={i} item={item} />
         ))}
         {/* Continue button at end of row */}
-        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 140, height: 210 }}>
+        <div className="flex-shrink-0 flex items-center justify-center rounded-xl" style={{ width: 140, height: 210, background: 'rgba(108,99,255,0.08)', border: '1px dashed rgba(108,99,255,0.3)' }}>
           <Link
             href={`/search?q=${encodeURIComponent(name)}&provider=streamplay`}
-            className="flex flex-col items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 hover:scale-105"
-            style={{
-              background: 'rgba(108,99,255,0.1)',
-              border: '1px solid rgba(108,99,255,0.3)',
-            }}
+            className="flex flex-col items-center gap-3 w-full h-full justify-center rounded-xl transition-all duration-200 hover:scale-105"
+            style={{ background: 'transparent' }}
           >
-            <div className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(108,99,255,0.2)', border: '1px solid rgba(108,99,255,0.4)' }}>
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{ color: 'var(--accent)' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(108,99,255,0.2)', border: '2px solid rgba(108,99,255,0.5)' }}>
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style={{ color: 'var(--accent)' }}>
                 <path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
               </svg>
             </div>
-            <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Continue</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>Continue</span>
           </Link>
         </div>
       </div>

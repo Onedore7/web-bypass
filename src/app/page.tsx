@@ -46,70 +46,70 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero Banner */}
-      {hero ? (
-        <div className="relative h-[420px] md:h-[520px] overflow-hidden">
-          <div className="absolute inset-0">
+      <div className="relative h-[420px] md:h-[520px] overflow-hidden" style={{ background: '#0a0a0f' }}>
+        {/* Backdrop image (if hero loaded) */}
+        {hero && (hero.backdrop || hero.poster) && (
+          <>
             <Image
               src={hero.backdrop || hero.poster}
-              alt={hero.title}
+              alt={hero.title || 'hero'}
               fill className="object-cover"
               priority onError={() => {}}
             />
-            <div className="absolute inset-0" style={{
-              background: 'linear-gradient(to right, rgba(10,10,15,0.95) 30%, rgba(10,10,15,0.4) 70%, rgba(10,10,15,0.6))',
-            }} />
-            <div className="absolute inset-0" style={{
-              background: 'linear-gradient(to top, var(--bg-primary) 0%, transparent 50%)',
-            }} />
-          </div>
-          {/* MR. PPK Logo centered */}
-          <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
-            <Image
-              src="/mr-ppk-logo.png"
-              alt="MR. PPK"
-              width={800}
-              height={365}
-              className="object-contain"
-              style={{ maxWidth: '70%', maxHeight: '55%', filter: 'drop-shadow(0 4px 40px rgba(0,0,0,0.9))' }}
-              priority
-            />
-          </div>
-          <div className="relative h-full flex items-end pb-12 px-6 md:px-14" style={{ zIndex: 2 }}>
-            <div className="max-w-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="provider-badge" style={{ background: 'rgba(108,99,255,0.2)', color: '#6c63ff', border: '1px solid rgba(108,99,255,0.3)' }}>
-                  🎬 PPK MOVIE
-                </span>
-                {hero.year && <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{hero.year}</span>}
-                {hero.rating && <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>⭐ {hero.rating}/5</span>}
-              </div>
-              <h1 className="text-3xl md:text-5xl font-bold mb-3 leading-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
-                {hero.title}
-              </h1>
-              <Link
-                href={`/detail/streamplay/${encodeURIComponent(hero.id)}`}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:scale-105 active:scale-95"
-                style={{ background: 'var(--accent)', color: '#fff', boxShadow: '0 8px 24px rgba(108,99,255,0.4)' }}
-              >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697L4.504 12.47A.75.75 0 013.5 11.794V4.206a.75.75 0 011.004-.703l7.092 3.773a.75.75 0 010 1.421z"/></svg>
-                Click Here
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="relative h-[420px] md:h-[520px] overflow-hidden flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-          <Image
+            <div className="absolute inset-0" style={{ background: 'rgba(10,10,15,0.8)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #0a0a0f 0%, transparent 40%)' }} />
+          </>
+        )}
+
+        {/* MR. PPK Logo — centered in upper area */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: hero ? '110px' : 0,
+          zIndex: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src="/mr-ppk-logo.png"
             alt="MR. PPK"
-            width={800}
-            height={365}
-            className="object-contain"
-            style={{ maxWidth: '70%', maxHeight: '60%', filter: 'drop-shadow(0 4px 40px rgba(0,0,0,0.9))' }}
-            priority
+            style={{
+              maxWidth: '55%',
+              maxHeight: '75%',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 40px rgba(0,0,0,0.9))',
+            }}
           />
         </div>
-      )}
+
+        {/* Movie info at bottom */}
+        {hero && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 3, padding: '0 24px 24px' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="provider-badge" style={{ background: 'rgba(108,99,255,0.2)', color: '#6c63ff', border: '1px solid rgba(108,99,255,0.3)' }}>
+                🎬 PPK MOVIE
+              </span>
+              {hero.year && <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{hero.year}</span>}
+              {hero.rating && <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>⭐ {hero.rating}/5</span>}
+            </div>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2 leading-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
+              {hero.title}
+            </h1>
+            <Link
+              href={`/detail/streamplay/${encodeURIComponent(hero.id)}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 hover:scale-105 active:scale-95"
+              style={{ background: 'var(--accent)', color: '#fff', boxShadow: '0 8px 24px rgba(108,99,255,0.4)' }}
+            >
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697L4.504 12.47A.75.75 0 013.5 11.794V4.206a.75.75 0 011.004-.703l7.092 3.773a.75.75 0 010 1.421z"/></svg>
+              Click Here
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div className="px-4 md:px-10 pb-16">
