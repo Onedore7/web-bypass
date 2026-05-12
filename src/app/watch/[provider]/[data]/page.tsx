@@ -6,11 +6,6 @@ import Link from 'next/link';
 interface Stream { url: string; label: string; type?: string; }
 interface Subtitle { url: string; label: string; }
 
-// Route embed URLs through our ad-stripping proxy
-function getProxiedUrl(url: string): string {
-  return `/api/proxy?url=${encodeURIComponent(url)}`;
-}
-
 export default function WatchPage() {
   const { data } = useParams<{ provider: string; data: string }>();
   const decodedData = decodeURIComponent(data);
@@ -20,6 +15,7 @@ export default function WatchPage() {
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [shieldClicks, setShieldClicks] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -40,83 +36,63 @@ export default function WatchPage() {
       .finally(() => setLoading(false));
   }, [decodedData]);
 
-  // ============ PARENT PAGE AD PROTECTION ============
+  // Reset shield when switching servers
+  useEffect(() => { setShieldClicks(0); }, [activeStream?.url]);
+
+  // ============ AD PROTECTION ON PARENT PAGE ============
   useEffect(() => {
-    // Block ALL popups from this page
-    const originalOpen = window.open;
+    // 1. Kill window.open completely
+    const origOpen = window.open;
     window.open = () => null;
 
-    // Block any dynamically added elements on our page
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) {
-            const el = node as HTMLElement;
-            const tag = el.tagName?.toLowerCase();
-            // Kill injected iframes that aren't our player
-            if (tag === 'iframe' && el !== iframeRef.current) {
-              el.remove();
-            }
-            // Kill high z-index overlays
-            const style = el.getAttribute('style') || '';
-            if (style.includes('z-index') && style.includes('position')) {
-              const zMatch = style.match(/z-index\s*:\s*(\d+)/);
-              if (zMatch && parseInt(zMatch[1]) > 9000) {
-                el.remove();
-              }
-            }
-            // Kill ad scripts
-            if (tag === 'script') {
-              const src = el.getAttribute('src') || '';
-              if (/ads|doubleclick|googlesyndication|popads|propeller|adsterra/i.test(src)) {
-                el.remove();
-              }
-            }
-          }
+    // 2. MutationObserver — remove injected junk on parent page
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts) {
+        m.addedNodes.forEach((n) => {
+          if (n.nodeType !== 1) return;
+          const el = n as HTMLElement;
+          const tag = el.tagName?.toLowerCase();
+          // Remove rogue iframes
+          if (tag === 'iframe' && el !== iframeRef.current) { el.remove(); return; }
+          // Remove high z-index overlays
+          const s = el.getAttribute('style') || '';
+          if (/z-index\s*:\s*\d{5,}/.test(s) && /position\s*:\s*(fixed|absolute)/.test(s)) { el.remove(); return; }
+          // Remove ad scripts
+          if (tag === 'script' && /ads|double|syndication|pop|propeller|adsterra/i.test(el.getAttribute('src') || '')) { el.remove(); }
         });
-      });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // Block ad links at capture phase
-    const blockAdClicks = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest?.('a');
-      if (anchor?.target === '_blank') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
       }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+
+    // 3. Block _blank links
+    const blockClicks = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest?.('a');
+      if (a?.target === '_blank') { e.preventDefault(); e.stopImmediatePropagation(); }
     };
-    document.addEventListener('click', blockAdClicks, true);
+    document.addEventListener('click', blockClicks, true);
+
+    // 4. Detect popup via blur — re-focus and re-shield
+    const onBlur = () => { setTimeout(() => window.focus(), 50); };
+    window.addEventListener('blur', onBlur);
 
     return () => {
-      window.open = originalOpen;
-      observer.disconnect();
-      document.removeEventListener('click', blockAdClicks, true);
+      window.open = origOpen;
+      obs.disconnect();
+      document.removeEventListener('click', blockClicks, true);
+      window.removeEventListener('blur', onBlur);
     };
   }, []);
 
-  // After iframe loads (now same-origin via proxy), inject additional blocking
+  // Try injecting into iframe (works if same-origin, won't error if cross-origin)
   const handleIframeLoad = useCallback(() => {
-    if (!iframeRef.current) return;
     try {
-      const iframeWin = iframeRef.current.contentWindow;
-      const iframeDoc = iframeRef.current.contentDocument;
-      if (iframeWin && iframeDoc) {
-        // The proxy already injected our blocking code, but reinforce:
-        (iframeWin as typeof window).open = () => null;
-        
-        // Also block popups in any nested iframes
-        const nestedIframes = iframeDoc.querySelectorAll('iframe');
-        nestedIframes.forEach((nested) => {
-          try {
-            if (nested.contentWindow) {
-              (nested.contentWindow as typeof window).open = () => null;
-            }
-          } catch { /* cross-origin nested iframe */ }
-        });
-      }
-    } catch { /* if proxy didn't work for some reason */ }
+      const w = iframeRef.current?.contentWindow;
+      if (w) (w as typeof window).open = () => null;
+    } catch { /* cross-origin */ }
   }, []);
+
+  const shieldActive = shieldClicks < 2;
+  const handleShieldClick = useCallback(() => setShieldClicks(c => c + 1), []);
 
   const isEmbed = activeStream?.type === 'embed';
   const isM3U8 = activeStream?.type === 'm3u8' || activeStream?.url?.includes('.m3u8');
@@ -126,16 +102,11 @@ export default function WatchPage() {
       {/* Top bar */}
       <div className="flex items-center gap-4 px-4 py-3" style={{ background: 'rgba(0,0,0,0.8)', borderBottom: '1px solid var(--border)' }}>
         <Link href="/" style={{ color: 'var(--accent)', fontSize: '0.875rem' }}>← Home</Link>
-        <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          🎬 PPK MOVIE
-        </span>
-        <span style={{ color: 'rgba(67,217,173,0.8)', fontSize: '0.7rem', marginLeft: 'auto' }}>
-          🛡️ Ad Shield Active
-        </span>
+        <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>🎬 PPK MOVIE</span>
+        <span style={{ color: 'rgba(67,217,173,0.8)', fontSize: '0.7rem', marginLeft: 'auto' }}>🛡️ Ad Shield</span>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-0">
-        {/* Video area */}
         <div className="flex-1">
           {loading && (
             <div className="flex items-center justify-center" style={{ height: '56.25vw', maxHeight: '70vh', background: '#000' }}>
@@ -157,31 +128,41 @@ export default function WatchPage() {
           )}
 
           {!loading && !error && activeStream && (
-            <div className="relative w-full" style={{ paddingBottom: '56.25%', background: '#000' }} data-player-container>
-              {isEmbed ? (
-                <iframe
-                  ref={iframeRef}
-                  src={getProxiedUrl(activeStream.url)}
-                  className="absolute inset-0 w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                  referrerPolicy="no-referrer"
-                  onLoad={handleIframeLoad}
-                  style={{ border: 'none' }}
-                />
-              ) : isM3U8 ? (
-                <HLSPlayer src={activeStream.url} subtitles={subtitles} />
+            <div className="relative w-full" style={{ paddingBottom: '56.25%', background: '#000' }}>
+              {(isEmbed || !isM3U8) ? (
+                <>
+                  <iframe
+                    ref={iframeRef}
+                    src={activeStream.url}
+                    className="absolute inset-0 w-full h-full"
+                    allowFullScreen
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    referrerPolicy="no-referrer"
+                    onLoad={handleIframeLoad}
+                    style={{ border: 'none', zIndex: 1 }}
+                  />
+                  {/* Click shield — absorbs first 2 ad-trigger clicks */}
+                  {shieldActive && (
+                    <div
+                      onClick={handleShieldClick}
+                      className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                      style={{ zIndex: 10, background: shieldClicks === 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.25)', transition: 'all 0.3s' }}
+                    >
+                      <div className="text-center">
+                        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-3"
+                          style={{ background: 'rgba(108,99,255,0.85)', boxShadow: '0 0 40px rgba(108,99,255,0.4)' }}>
+                          <svg width="30" height="30" fill="white" viewBox="0 0 16 16">
+                            <path d="M11.596 8.697L4.504 12.47A.75.75 0 013.5 11.794V4.206a.75.75 0 011.004-.703l7.092 3.773a.75.75 0 010 1.421z"/>
+                          </svg>
+                        </div>
+                        <p className="text-white font-semibold">{shieldClicks === 0 ? 'Click to Play' : 'Click Again'}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.7rem', marginTop: 4 }}>🛡️ Absorbing ads...</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
-                <iframe
-                  ref={iframeRef}
-                  src={getProxiedUrl(activeStream.url)}
-                  className="absolute inset-0 w-full h-full"
-                  allowFullScreen
-                  allow="autoplay; encrypted-media; fullscreen"
-                  referrerPolicy="no-referrer"
-                  onLoad={handleIframeLoad}
-                  style={{ border: 'none' }}
-                />
+                <HLSPlayer src={activeStream.url} subtitles={subtitles} />
               )}
             </div>
           )}
@@ -196,7 +177,7 @@ export default function WatchPage() {
           )}
         </div>
 
-        {/* Server selector */}
+        {/* Sidebar */}
         <div className="lg:w-64 p-4" style={{ background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border)', minHeight: '100vh' }}>
           <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>SERVERS</h3>
           <div className="space-y-2">
@@ -209,7 +190,7 @@ export default function WatchPage() {
                   color: activeStream?.url === stream.url ? '#a599ff' : 'var(--text-secondary)',
                 }}>
                 <div className="flex items-center gap-2">
-                  <span>{stream.type === 'embed' ? '🖥️' : '📺'}</span>
+                  <span>🖥️</span>
                   <span>{stream.label}</span>
                 </div>
               </button>
@@ -231,11 +212,10 @@ export default function WatchPage() {
             </>
           )}
 
-          {/* Ad Shield Info */}
           <div className="mt-6 p-3 rounded-xl" style={{ background: 'rgba(67,217,173,0.08)', border: '1px solid rgba(67,217,173,0.2)' }}>
             <p className="text-xs font-semibold mb-1" style={{ color: 'rgba(67,217,173,0.9)' }}>🛡️ Ad Shield</p>
             <p className="text-xs" style={{ color: 'rgba(67,217,173,0.6)' }}>
-              Server-side proxy strips ads before they reach your browser. Zero popups.
+              Popup blocker + click shield active. If a server has too many ads, try another server.
             </p>
           </div>
         </div>
@@ -246,7 +226,6 @@ export default function WatchPage() {
 
 function HLSPlayer({ src, subtitles }: { src: string; subtitles: Subtitle[] }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-
   useEffect(() => {
     if (!videoRef.current) return;
     const video = videoRef.current;
@@ -266,13 +245,7 @@ function HLSPlayer({ src, subtitles }: { src: string; subtitles: Subtitle[] }) {
 
   return (
     <div className="absolute inset-0">
-      <video
-        ref={videoRef}
-        className="w-full h-full"
-        controls autoPlay
-        crossOrigin="anonymous"
-        style={{ background: '#000' }}
-      >
+      <video ref={videoRef} className="w-full h-full" controls autoPlay crossOrigin="anonymous" style={{ background: '#000' }}>
         {subtitles.map((sub, i) => (
           <track key={i} kind="subtitles" src={sub.url} label={sub.label} />
         ))}
