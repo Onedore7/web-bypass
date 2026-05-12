@@ -1,15 +1,51 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import type { Provider } from '@/app/page';
 
 interface Stream { url: string; label: string; type?: string; }
 interface Subtitle { url: string; label: string; }
 
+// CSS to inject into iframes to hide common ad elements
+const AD_BLOCK_CSS = `
+  /* Hide common ad containers, popups, overlays */
+  [class*="ad-"], [class*="ads-"], [class*="adsbygoogle"],
+  [id*="ad-"], [id*="ads-"], [id*="adsbygoogle"],
+  [class*="popup"], [class*="overlay"], [class*="modal"],
+  [class*="banner"], [class*="sponsor"],
+  [class*="preroll"], [class*="midroll"],
+  iframe[src*="ads"], iframe[src*="doubleclick"],
+  iframe[src*="googlesyndication"], iframe[src*="adservice"],
+  div[class*="close-btn"], div[class*="skip"],
+  .popunder, .pop-under, .clickunder,
+  [class*="vast-"], [id*="vast-"],
+  [class*="vpaid"], [id*="vpaid"],
+  div[style*="z-index: 2147483647"],
+  div[style*="z-index:2147483647"],
+  div[style*="z-index: 999999"],
+  div[style*="z-index:999999"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    overflow: hidden !important;
+  }
+
+  /* Prevent new windows/tabs from ad scripts */
+  a[target="_blank"][rel*="nofollow"],
+  a[onclick*="window.open"],
+  a[href*="redirect"],
+  a[href*="tracking"] {
+    pointer-events: none !important;
+    display: none !important;
+  }
+`;
+
 export default function WatchPage() {
-  const { provider, data } = useParams<{ provider: string; data: string }>();
-  const decodedProvider = decodeURIComponent(provider) as Provider;
+  const { data } = useParams<{ provider: string; data: string }>();
   const decodedData = decodeURIComponent(data);
 
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -22,7 +58,7 @@ export default function WatchPage() {
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch(`/api/streams?provider=${decodedProvider}&data=${encodeURIComponent(decodedData)}`)
+    fetch(`/api/streams?provider=streamplay&data=${encodeURIComponent(decodedData)}`)
       .then(r => r.json())
       .then(j => {
         if (j.ok) {
@@ -35,7 +71,78 @@ export default function WatchPage() {
       })
       .catch(e => setError(String(e)))
       .finally(() => setLoading(false));
-  }, [decodedProvider, decodedData]);
+  }, [decodedData]);
+
+  // Ad bypass: inject CSS into iframe and block popups
+  const handleIframeLoad = useCallback(() => {
+    if (!iframeRef.current) return;
+    try {
+      const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
+      if (iframeDoc) {
+        // Inject ad-blocking CSS
+        const style = iframeDoc.createElement('style');
+        style.textContent = AD_BLOCK_CSS;
+        iframeDoc.head?.appendChild(style);
+
+        // Block window.open calls (popup ads)
+        const iframeWindow = iframeRef.current.contentWindow;
+        if (iframeWindow) {
+          (iframeWindow as Window & { open: typeof window.open }).open = () => null;
+        }
+
+        // Remove ad-related elements periodically
+        const cleanup = () => {
+          try {
+            if (!iframeDoc) return;
+            // Remove elements with ad-related attributes
+            const adSelectors = [
+              '[class*="ad"]', '[id*="ad"]', '[class*="popup"]',
+              '[class*="overlay"]:not(.player-overlay)', '[class*="banner"]',
+              'iframe[src*="ads"]', 'iframe[src*="doubleclick"]',
+            ];
+            adSelectors.forEach(sel => {
+              iframeDoc.querySelectorAll(sel).forEach((el: Element) => {
+                const htmlEl = el as HTMLElement;
+                // Don't remove the video player itself
+                if (!htmlEl.querySelector('video') && !htmlEl.closest('video')) {
+                  const rect = htmlEl.getBoundingClientRect();
+                  // Only hide elements that look like overlays (covering large areas)
+                  if (rect.width > 200 && rect.height > 200 && htmlEl.style.zIndex && parseInt(htmlEl.style.zIndex) > 1000) {
+                    htmlEl.style.display = 'none';
+                  }
+                }
+              });
+            });
+          } catch { /* cross-origin, ignore */ }
+        };
+
+        // Run cleanup periodically for dynamically injected ads
+        const interval = setInterval(cleanup, 2000);
+        return () => clearInterval(interval);
+      }
+    } catch {
+      // Cross-origin iframe — can't inject directly, sandboxing handles it
+    }
+  }, []);
+
+  // Block page-level popup/redirect attempts
+  useEffect(() => {
+    const blockPopups = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A') {
+        const link = target as HTMLAnchorElement;
+        if (link.target === '_blank' && (
+          link.href.includes('ads') || link.href.includes('redirect') ||
+          link.href.includes('tracking') || link.href.includes('click')
+        )) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+    document.addEventListener('click', blockPopups, true);
+    return () => document.removeEventListener('click', blockPopups, true);
+  }, []);
 
   const isEmbed = activeStream?.type === 'embed';
   const isM3U8 = activeStream?.type === 'm3u8' || activeStream?.url?.includes('.m3u8');
@@ -46,7 +153,7 @@ export default function WatchPage() {
       <div className="flex items-center gap-4 px-4 py-3" style={{ background: 'rgba(0,0,0,0.8)', borderBottom: '1px solid var(--border)' }}>
         <Link href="/" style={{ color: 'var(--accent)', fontSize: '0.875rem' }}>← Home</Link>
         <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {decodedProvider === 'kisskh' ? '🎭 KissKh' : decodedProvider === 'watch32' ? '📺 Watch32' : '🌐 StreamPlay'}
+          🎬 PPK MOVIE
         </span>
       </div>
 
@@ -81,16 +188,23 @@ export default function WatchPage() {
                   className="absolute inset-0 w-full h-full"
                   allowFullScreen
                   allow="autoplay; encrypted-media; picture-in-picture"
-                  referrerPolicy={decodedProvider === 'watch32' ? 'strict-origin-when-cross-origin' : 'no-referrer'}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
+                  referrerPolicy="no-referrer"
+                  onLoad={handleIframeLoad}
                   style={{ border: 'none' }}
                 />
               ) : isM3U8 ? (
                 <HLSPlayer src={activeStream.url} subtitles={subtitles} />
               ) : (
                 <iframe
+                  ref={iframeRef}
                   src={activeStream.url}
                   className="absolute inset-0 w-full h-full"
-                  allowFullScreen allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  allow="autoplay; encrypted-media"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
+                  referrerPolicy="no-referrer"
+                  onLoad={handleIframeLoad}
                   style={{ border: 'none' }}
                 />
               )}

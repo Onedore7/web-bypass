@@ -1,11 +1,11 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { MediaCard, Provider } from '@/app/page';
+import type { MediaCard } from '@/app/page';
 
-interface Props { items: MediaCard[]; name: string; provider: Provider; }
+interface Props { items: MediaCard[]; name: string; }
 
-export default function ContentRow({ items, name, provider }: Props) {
+export default function ContentRow({ items, name }: Props) {
   return (
     <div>
       <h2 className="text-base font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
@@ -14,15 +14,15 @@ export default function ContentRow({ items, name, provider }: Props) {
       </h2>
       <div className="scroll-row">
         {items.map((item, i) => (
-          <MediaCardItem key={i} item={item} provider={provider} />
+          <MediaCardItem key={i} item={item} />
         ))}
       </div>
     </div>
   );
 }
 
-function MediaCardItem({ item, provider }: { item: MediaCard; provider: Provider }) {
-  const href = `/detail/${encodeURIComponent(provider)}/${encodeURIComponent(item.id)}`;
+function MediaCardItem({ item }: { item: MediaCard }) {
+  const href = `/detail/streamplay/${encodeURIComponent(item.id)}`;
   return (
     <Link href={href} className="flex-shrink-0 card-glow group" style={{ width: 140 }}>
       <div className="relative rounded-xl overflow-hidden" style={{ width: 140, height: 210, background: 'var(--bg-card)' }}>

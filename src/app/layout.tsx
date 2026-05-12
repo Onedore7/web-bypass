@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "StreamVault — Watch Movies, Dramas & Anime",
-  description: "Stream your favourite movies, K-Dramas, anime and more. Powered by PencuriMovie, KissKh and StreamPlay.",
-  keywords: "streaming, movies, kdrama, anime, watch online, free streaming",
+  title: "PPK MOVIE — Watch Movies, TV Shows & Anime",
+  description: "Stream your favourite movies, TV shows, anime and more. Powered by PPK MOVIE.",
+  keywords: "streaming, movies, tv shows, anime, watch online, free streaming, ppk movie",
   openGraph: {
-    title: "StreamVault",
-    description: "Watch Movies, K-Dramas & Anime for free",
+    title: "PPK MOVIE",
+    description: "Watch Movies, TV Shows & Anime for free",
     type: "website",
   },
 };

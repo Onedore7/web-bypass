@@ -3,12 +3,11 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { MediaCard, Provider } from '@/app/page';
+import type { MediaCard } from '@/app/page';
 
 function SearchResults() {
   const params = useSearchParams();
   const q = params.get('q') || '';
-  const provider = (params.get('provider') || 'streamplay') as Provider;
   const [results, setResults] = useState<MediaCard[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -17,15 +16,11 @@ function SearchResults() {
     if (!q) return;
     setLoading(true);
     setSearched(false);
-    fetch(`/api/search?q=${encodeURIComponent(q)}&provider=${provider}`)
+    fetch(`/api/search?q=${encodeURIComponent(q)}&provider=streamplay`)
       .then(r => r.json())
       .then(j => { if (j.ok) setResults(j.data || []); })
       .finally(() => { setLoading(false); setSearched(true); });
-  }, [q, provider]);
-
-  const PROVIDER_LABEL: Record<Provider, string> = {
-    streamplay: '🌐 StreamPlay', kisskh: '🎭 KissKh', watch32: '📺 Watch32',
-  };
+  }, [q]);
 
   return (
     <div className="min-h-screen px-4 md:px-10 pt-8 pb-16" style={{ background: 'var(--bg-primary)' }}>
@@ -39,7 +34,7 @@ function SearchResults() {
       </h1>
       <div className="flex items-center gap-2 mb-6">
         <span className="provider-badge" style={{ background: 'rgba(108,99,255,0.15)', color: '#a599ff', border: '1px solid rgba(108,99,255,0.3)' }}>
-          {PROVIDER_LABEL[provider]}
+          🎬 PPK MOVIE
         </span>
         {searched && <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{results.length} results</span>}
       </div>
@@ -63,7 +58,7 @@ function SearchResults() {
       {!loading && results.length > 0 && (
         <div className="grid gap-4 fade-in" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
           {results.map((item, i) => (
-            <Link key={i} href={`/detail/${encodeURIComponent(provider)}/${encodeURIComponent(item.id)}`}
+            <Link key={i} href={`/detail/streamplay/${encodeURIComponent(item.id)}`}
               className="card-glow group">
               <div className="relative rounded-xl overflow-hidden" style={{ aspectRatio: '2/3', background: 'var(--bg-card)' }}>
                 {item.poster ? (

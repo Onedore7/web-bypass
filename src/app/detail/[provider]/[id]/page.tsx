@@ -3,37 +3,35 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Provider } from '@/app/page';
 
 interface Episode { name: string; href: string; episode?: number; season?: number; number?: number; id?: number; }
 interface Detail {
   title: string; poster: string; backdrop?: string; overview?: string; description?: string;
   year?: string; rating?: string; genres?: string[]; cast?: { name: string; photo?: string; role?: string }[];
   type?: string; episodes?: Episode[]; status?: string; country?: string; trailer?: string;
-  streamData?: string; // Watch32: "list/{contentId}" for movies, "servers/{epId}" for episodes
+  streamData?: string;
 }
 
 export default function DetailPage() {
-  const { provider, id } = useParams<{ provider: string; id: string }>();
+  const { id } = useParams<{ provider: string; id: string }>();
   const decodedId = decodeURIComponent(id);
-  const decodedProvider = decodeURIComponent(provider) as Provider;
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSeason, setSelectedSeason] = useState(1);
 
   useEffect(() => {
-    fetch(`/api/detail?provider=${decodedProvider}&id=${encodeURIComponent(decodedId)}`)
+    fetch(`/api/detail?provider=streamplay&id=${encodeURIComponent(decodedId)}`)
       .then(r => r.json())
       .then(j => { if (j.ok) setDetail(j.data); })
       .finally(() => setLoading(false));
-  }, [decodedId, decodedProvider]);
+  }, [decodedId]);
 
   const seasons = Array.from(new Set((detail?.episodes || []).map(e => e.season).filter(Boolean))).sort();
   const filteredEps = detail?.episodes?.filter(e => e.season === selectedSeason || !e.season) || [];
 
   const getWatchHref = (ep: Episode) => {
     const data = ep.href || ep.id?.toString() || decodedId;
-    return `/watch/${encodeURIComponent(decodedProvider)}/${encodeURIComponent(data)}`;
+    return `/watch/streamplay/${encodeURIComponent(data)}`;
   };
 
   if (loading) return (
@@ -53,9 +51,8 @@ export default function DetailPage() {
   );
 
   const isMovie = detail.type === 'movie' || !detail.episodes?.length;
-  // For Watch32: use streamData (list/{contentId}), else fall back to decodedId
   const watchData = detail.streamData || decodedId;
-  const directWatchHref = `/watch/${encodeURIComponent(decodedProvider)}/${encodeURIComponent(watchData)}`;
+  const directWatchHref = `/watch/streamplay/${encodeURIComponent(watchData)}`;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
@@ -120,7 +117,7 @@ export default function DetailPage() {
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-105"
                   style={{ background: 'var(--accent)', color: '#fff', boxShadow: '0 8px 24px rgba(108,99,255,0.4)' }}>
                   <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697L4.504 12.47A.75.75 0 013.5 11.794V4.206a.75.75 0 011.004-.703l7.092 3.773a.75.75 0 010 1.421z"/></svg>
-                  Watch Now
+                  Click Here
                 </Link>
               )}
               {detail.trailer && (
