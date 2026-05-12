@@ -54,16 +54,13 @@ function MediaCardItem({ item }: { item: MediaCard }) {
             ⭐ {item.rating}
           </div>
         )}
-        {/* Gradient */}
-        <div className="absolute bottom-0 inset-x-0 h-16"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }} />
-        {item.year && (
-          <div className="absolute bottom-2 left-2 text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>{item.year}</div>
-        )}
       </div>
       <p className="mt-2 text-xs font-medium leading-tight line-clamp-2" style={{ color: 'var(--text-secondary)', width: 140 }}>
         {item.title}
       </p>
+      {item.year && (
+        <p className="text-xs mt-0.5" style={{ color: 'rgba(160,160,184,0.5)' }}>{item.year}</p>
+      )}
     </Link>
   );
 }
