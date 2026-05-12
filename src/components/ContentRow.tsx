@@ -16,6 +16,25 @@ export default function ContentRow({ items, name }: Props) {
         {items.map((item, i) => (
           <MediaCardItem key={i} item={item} />
         ))}
+        {/* Continue button at end of row */}
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 140, height: 210 }}>
+          <Link
+            href={`/search?q=${encodeURIComponent(name)}&provider=streamplay`}
+            className="flex flex-col items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'rgba(108,99,255,0.1)',
+              border: '1px solid rgba(108,99,255,0.3)',
+            }}
+          >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(108,99,255,0.2)', border: '1px solid rgba(108,99,255,0.4)' }}>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{ color: 'var(--accent)' }}>
+                <path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </div>
+            <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Continue</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

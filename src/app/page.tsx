@@ -67,10 +67,10 @@ export default function HomePage() {
             <Image
               src="/mr-ppk-logo.png"
               alt="MR. PPK"
-              width={320}
-              height={320}
-              className="object-contain opacity-90"
-              style={{ maxWidth: '50%', maxHeight: '60%', filter: 'drop-shadow(0 4px 30px rgba(0,0,0,0.8))' }}
+              width={800}
+              height={365}
+              className="object-contain"
+              style={{ maxWidth: '70%', maxHeight: '55%', filter: 'drop-shadow(0 4px 40px rgba(0,0,0,0.9))' }}
               priority
             />
           </div>
@@ -102,10 +102,10 @@ export default function HomePage() {
           <Image
             src="/mr-ppk-logo.png"
             alt="MR. PPK"
-            width={400}
-            height={400}
+            width={800}
+            height={365}
             className="object-contain"
-            style={{ maxWidth: '60%', maxHeight: '70%', filter: 'drop-shadow(0 4px 30px rgba(0,0,0,0.8))' }}
+            style={{ maxWidth: '70%', maxHeight: '60%', filter: 'drop-shadow(0 4px 40px rgba(0,0,0,0.9))' }}
             priority
           />
         </div>
