@@ -93,7 +93,7 @@ export default function DetailPage() {
                 </span>
               )}
               {detail.year && <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{detail.year}</span>}
-              {detail.rating && <span style={{ color: '#f59e0b', fontSize: '0.85rem' }}>★ {detail.rating}</span>}
+              {detail.rating && <span style={{ color: '#f59e0b', fontSize: '0.85rem' }}>⭐ {detail.rating}/5</span>}
               {detail.country && <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{detail.country}</span>}
             </div>
 

@@ -40,7 +40,7 @@ function toCard(m: TmdbMedia, defaultType = 'movie') {
     title: m.title || m.name || '',
     poster: m.poster_path ? IMG + m.poster_path : '',
     backdrop: m.backdrop_path ? IMGBIG + m.backdrop_path : '',
-    rating: m.vote_average?.toFixed(1),
+    rating: m.vote_average ? (m.vote_average / 2).toFixed(1) : undefined,
     year: (m.release_date || m.first_air_date || '').slice(0, 4),
     type,
     provider: 'streamplay',
@@ -99,7 +99,7 @@ export async function getDetail(dataStr: string) {
     backdrop: data.backdrop_path ? IMGBIG + data.backdrop_path : '',
     overview: data.overview,
     year: (data.release_date || data.first_air_date || '').slice(0, 4),
-    rating: data.vote_average?.toFixed(1),
+    rating: data.vote_average ? (data.vote_average / 2).toFixed(1) : undefined,
     genres: (data.genres || []).map((g: { name: string }) => g.name),
     cast: (data.credits?.cast || []).slice(0, 8).map((c: { name: string; profile_path?: string; character?: string }) => ({
       name: c.name, photo: c.profile_path ? IMG + c.profile_path : '', role: c.character,

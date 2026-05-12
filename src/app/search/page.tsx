@@ -76,7 +76,7 @@ function SearchResults() {
                   </div>
                 </div>
                 {item.rating && (
-                  <div className="absolute top-2 right-2 provider-badge text-white" style={{ background: 'rgba(245,158,11,0.85)' }}>★ {item.rating}</div>
+                  <div className="absolute top-2 right-2 provider-badge text-white" style={{ background: 'rgba(245,158,11,0.85)' }}>⭐ {item.rating}</div>
                 )}
               </div>
               <p className="mt-2 text-xs font-medium line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{item.title}</p>

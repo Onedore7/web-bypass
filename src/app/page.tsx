@@ -69,7 +69,7 @@ export default function HomePage() {
                   🎬 PPK MOVIE
                 </span>
                 {hero.year && <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{hero.year}</span>}
-                {hero.rating && <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>★ {hero.rating}</span>}
+                {hero.rating && <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>⭐ {hero.rating}/5</span>}
               </div>
               <h1 className="text-3xl md:text-5xl font-bold mb-3 leading-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
                 {hero.title}

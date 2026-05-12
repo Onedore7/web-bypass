@@ -51,7 +51,7 @@ function MediaCardItem({ item }: { item: MediaCard }) {
         {/* Rating */}
         {item.rating && (
           <div className="absolute top-2 right-2 provider-badge" style={{ background: 'rgba(245,158,11,0.85)', color: '#fff' }}>
-            ★ {item.rating}
+            ⭐ {item.rating}
           </div>
         )}
         {/* Gradient */}
