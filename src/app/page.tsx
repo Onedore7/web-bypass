@@ -46,7 +46,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero Banner */}
-      {hero && (
+      {hero ? (
         <div className="relative h-[420px] md:h-[520px] overflow-hidden">
           <div className="absolute inset-0">
             <Image
@@ -62,7 +62,19 @@ export default function HomePage() {
               background: 'linear-gradient(to top, var(--bg-primary) 0%, transparent 50%)',
             }} />
           </div>
-          <div className="relative h-full flex items-end pb-12 px-6 md:px-14">
+          {/* MR. PPK Logo centered */}
+          <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
+            <Image
+              src="/mr-ppk-logo.png"
+              alt="MR. PPK"
+              width={320}
+              height={320}
+              className="object-contain opacity-90"
+              style={{ maxWidth: '50%', maxHeight: '60%', filter: 'drop-shadow(0 4px 30px rgba(0,0,0,0.8))' }}
+              priority
+            />
+          </div>
+          <div className="relative h-full flex items-end pb-12 px-6 md:px-14" style={{ zIndex: 2 }}>
             <div className="max-w-xl">
               <div className="flex items-center gap-2 mb-3">
                 <span className="provider-badge" style={{ background: 'rgba(108,99,255,0.2)', color: '#6c63ff', border: '1px solid rgba(108,99,255,0.3)' }}>
@@ -84,6 +96,18 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="relative h-[420px] md:h-[520px] overflow-hidden flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
+          <Image
+            src="/mr-ppk-logo.png"
+            alt="MR. PPK"
+            width={400}
+            height={400}
+            className="object-contain"
+            style={{ maxWidth: '60%', maxHeight: '70%', filter: 'drop-shadow(0 4px 30px rgba(0,0,0,0.8))' }}
+            priority
+          />
         </div>
       )}
 
