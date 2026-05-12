@@ -188,7 +188,6 @@ export default function WatchPage() {
                   className="absolute inset-0 w-full h-full"
                   allowFullScreen
                   allow="autoplay; encrypted-media; picture-in-picture"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
                   referrerPolicy="no-referrer"
                   onLoad={handleIframeLoad}
                   style={{ border: 'none' }}
@@ -202,7 +201,6 @@ export default function WatchPage() {
                   className="absolute inset-0 w-full h-full"
                   allowFullScreen
                   allow="autoplay; encrypted-media"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
                   referrerPolicy="no-referrer"
                   onLoad={handleIframeLoad}
                   style={{ border: 'none' }}
